@@ -25,6 +25,7 @@
   // Defaults are exposed publically so you can reuse bits that you find
   // handy (the colors, for instance)
   $.fn.tufteGraph.defaults = {
+    toolTip: function(index) {return this[0] },
     colors:    ['#07093D', '#0C0F66', '#476FB2'],
     color:     function(index, stackedIndex, options) { return options.colors[stackedIndex % options.colors.length]; },
     legend: {
@@ -125,9 +126,21 @@
         var color = optionResolver(options.color);
         var t = plot.ctx.scale;
         var coords = [t.X(left), t.Y(top), t.W(width), t.H(height)];
+        var toolTip = optionResolver(options.toolTip);
+        var r = plot.ctx.rect(coords[0], coords[1], coords[2], coords[3]).attr({stroke: color, fill: color});
 
-        plot.ctx.rect(coords[0], coords[1], coords[2], coords[3]).attr({stroke: color, fill: color});
-
+          // adding tooltip
+             if (options.toolTip) {
+                $(r[0]).mousemove(function(e){
+                   $("#tooltip").remove(); 
+                   showBarToolTip(e.pageX,e.pageY,toolTip);
+                 }); 
+                  
+                 r[0].onmouseout = function() {
+                     $("#tooltip").remove();
+                 };
+             }
+        
         lastY = lastY + y;
       },
       drawStack: function(i, stackedY, element, x) {
@@ -236,6 +249,29 @@
     methods.drawGraph();
     options.afterDraw.graph(ctx);
   }
+
+ //basic function to show message when the user mouses over an area on the chart - lpa - 6/15/09
+ //this is modified from a Flot example (http://code.google.com/p/flot/)
+  function showBarToolTip(x,y,contents) {
+      $('<div id="tooltip">' + contents + '</div>').css({
+			position: 'absolute',
+			top: y - 10,
+			left: x + 12,
+			border: '1px solid #ddd',
+			padding: '7px 10px',
+			'background-color': '#333',
+			'color': '#fff',
+			'font-weight': 'bold',
+			'box-shadow': '0 0 10px rgba(0, 0, 0, 0.25)', 
+			'-moz-box-shadow' : '0 0 10px rgba(0, 0, 0, 0.25)',  
+			'-webkit-box-shadow' : '0 0 10px rgba(0, 0, 0, 0.25)',
+			'border-radius': '6px',
+			'-moz-border-radius': '6px',
+			'-webkit-border-radius': '6px',
+			opacity: 0.90
+      }).appendTo("body").fadeIn(500);
+  }
+  
 
   // If legend data has been provided, transform it into an
   // absolutely positioned table placed at the top right of the graph
